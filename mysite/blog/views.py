@@ -14,7 +14,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import LoginForm, UserRegistrationForm, \
-                   UserEditForm
+                   UserEditForm,PostForm
 # filter
 from django.contrib.auth.models import User
 from .filters import UserFilter
@@ -24,6 +24,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 import redis
 from django.conf import settings
+
+# update post
+from django.utils.decorators import method_decorator
+from django.views.generic import ListView,UpdateView,DeleteView
+from django.urls import reverse_lazy,reverse
+
+
 r = redis.Redis(host=settings.REDIS_HOST,
  port=settings.REDIS_PORT,
  db=settings.REDIS_DB)
@@ -48,7 +55,7 @@ def image_like(request):
 def search(request):
     user_list = User.objects.all()
     user_filter = UserFilter(request.GET, queryset=user_list)
-    return render(request, 'blog/post/user_filter.html', {'filter': user_filter})
+    return render(request, 'account/user_filter.html', {'filter': user_filter})
 
 
 from django.contrib.auth.models import User
@@ -61,13 +68,13 @@ def image_ranking(request):
     # get most viewed images
     most_viewed = list(Post.objects.filter(id__in=image_ranking_ids))
     most_viewed.sort(key=lambda x: image_ranking_ids.index(x.id))
-    return render(request,'blog/post/list.html',{'section': 'images','most_viewed': most_viewed})
+    return render(request,'account/posts.html',{'section': 'images','most_viewed': most_viewed})
 
 
 
 
 
-@login_required
+# @login_required
 def post_list(request, tag_slug=None):
     object_list = Post.published.all()
     
@@ -95,7 +102,7 @@ def post_list(request, tag_slug=None):
         # If page is out of range deliver last page of results
         posts = paginator.page(paginator.num_pages)
     return render(request,
-                 'blog/post/list.html',
+                 'account/posts.html',
                  {'page': page,
                   'posts': posts,
                   'tag': tag,
@@ -136,19 +143,12 @@ def post_detail(request, year, month, day, post):
                                 .order_by('-same_tags','-publish')[:4]
 
     return render(request,
-                  'blog/post/detail.html',
+                  'account/details.html',
                   {'post': post,
                    'comments': comments,
                    'new_comment': new_comment,
                    'comment_form': comment_form,
                    'similar_posts': similar_posts})
-
-
-class PostListView(ListView):
-    queryset = Post.published.all()
-    context_object_name = 'posts'
-    paginate_by = 3
-    template_name = 'blog/post/list.html'
 
 
 def post_share(request, post_id):
@@ -171,11 +171,11 @@ def post_share(request, post_id):
 
     else:
         form = EmailPostForm()
-    return render(request, 'blog/post/share.html', {'post': post,
+    return render(request, 'account/share.html', {'post': post,
                                                     'form': form,
                                                     'sent': sent})
 
-
+@login_required
 def post_search(request):
     form = SearchForm()
     query = None
@@ -187,7 +187,48 @@ def post_search(request):
             results = Post.published.annotate(similarity=TrigramSimilarity('title', query),).filter(similarity__gt=0.1).order_by('-similarity')
             
     return render(request,
-                  'blog/post/search.html',
+                  'account/search.html',
                   {'form': form,
                    'query': query,
                    'results': results})
+
+
+@login_required
+def post_upload(request):
+    form_class = PostForm
+    form = form_class(request.POST or None)
+
+    if request.method == 'POST':
+        # A comment was posted
+        if form.is_valid():
+            # Save the comment to the database
+            # print (form['title'].value())
+            # print (form.data['title'])
+            title =form.data['title']
+            form.save()
+            # print(form.title)
+            return render(request,
+                          'account/uploadsuccess.html',{'title':title}
+                          )
+    else:
+        form = PostForm()
+
+    return render(request,
+                  'account/uploadpost.html',
+                  {'post_form':form
+                    })
+
+@method_decorator(login_required, name='dispatch')
+class UpdatePostView(UpdateView):
+    model = Post
+    template_name = 'account/update_post.html'
+    fields = ['title','slug','body','status','tags']
+
+@method_decorator(login_required, name='dispatch')
+class DeletePostView(DeleteView):
+    model = Post
+    template_name = 'account/delete_post.html'
+
+    def get_success_url(self):
+        return reverse('blog:post_list')
+

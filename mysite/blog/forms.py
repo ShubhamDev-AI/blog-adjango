@@ -1,5 +1,5 @@
 from django import forms
-from .models import Comment
+from .models import Comment ,Post
 from django.contrib.auth.models import User
 
 
@@ -16,6 +16,14 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('name', 'email', 'body')
+
+# post form 
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields =('title','slug','author','body','publish','status','tags')
+
+
 
 
 class SearchForm(forms.Form):
