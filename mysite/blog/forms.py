@@ -1,8 +1,9 @@
 from django import forms
-from .models import Comment ,Post
+from .models import Comment ,Post,Category
 from django.contrib.auth.models import User
 
 
+    # print(item)
 
 class EmailPostForm(forms.Form):
     name = forms.CharField(max_length=25)
@@ -19,9 +20,26 @@ class CommentForm(forms.ModelForm):
 
 # post form 
 class PostForm(forms.ModelForm):
+    # category= forms.Select(choices =choice_list,attrs={'class':'form-control'})
+    
     class Meta:
         model = Post
-        fields =('title','slug','author','body','publish','status','tags')
+        choice = Category.objects.all().values_list('name','name')
+        choice_list = []
+        for item in choice:
+            choice_list.append(item)
+        fields =('title','slug','author','body','category','status','tags')
+        widgets = {
+            'title':forms.TextInput(attrs={'class':'form-control'}),
+            'slug':forms.TextInput(attrs={'class':'form-control'}),
+            'author':forms.TextInput(attrs={'class':'form-control','value':'','id':'elder','type':'hidden'}),
+            # 'author': forms.Select(attrs={'class':'form-control'}),
+            'body':forms.Textarea(attrs={'rows': 5, 'cols': 100}),
+            'category':forms.Select(choices =choice_list,attrs={'class':'form-control'}),
+            'status':forms.Select(attrs={'class':'form-control'}),
+            'tags':forms.TextInput(attrs={'class':'form-control'})
+            
+        }
 
 
 

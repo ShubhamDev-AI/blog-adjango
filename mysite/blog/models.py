@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
 from django.conf import settings
+from ckeditor.fields import RichTextField
 
 
 class PublishedManager(models.Manager):
@@ -13,6 +14,15 @@ class PublishedManager(models.Manager):
 class UNPublishedManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(status='')
+
+class Category(models.Model):
+    name = models.CharField(max_length=250)
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('blog:post_list')
 
 
 class Post(models.Model):
@@ -26,16 +36,18 @@ class Post(models.Model):
     author = models.ForeignKey(User,
                               on_delete=models.CASCADE,
                               related_name='blog_posts')
-    body = models.TextField()
+    # body = models.TextField()
+    body = RichTextField(blank=True ,null=True)
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=10,
                               choices=STATUS_CHOICES,
                               default='draft')
-    users_like = models.ManyToManyField(settings.AUTH_USER_MODEL,related_name='images_liked',blank=True)
+    likes = models.ManyToManyField(User,related_name='images_liked',blank=True)
     total_views =models.PositiveIntegerField(db_index=True,
                                               default=0)
+    category = models.CharField(max_length=210,default='web technology')
     objects = models.Manager() # The default manager.
     published = PublishedManager() # Our custom manager.
     Unpublished = UNPublishedManager() # Our custom manager.
@@ -52,6 +64,9 @@ class Post(models.Model):
                        args=[self.publish.year,
                              self.publish.month,
                              self.publish.day, self.slug])
+
+    def total_likes(self):
+        return self.likes.count()
 
 
 class Comment(models.Model):
@@ -93,5 +108,8 @@ def export_csv(modeladmin, request, queryset):
     return response
 export_csv.short_description = u"Export CSV"
 
-
+class History(models.Model):
+    hist_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post_id = models.CharField(max_length=10000000, default="")
 

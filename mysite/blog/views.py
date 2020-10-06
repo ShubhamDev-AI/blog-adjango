@@ -1,12 +1,14 @@
 from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.core.paginator import Paginator, EmptyPage,\
                                   PageNotAnInteger
 from django.core.mail import send_mail
 from django.views.generic import ListView
+from django.shortcuts import redirect
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.contrib.postgres.search import TrigramSimilarity
-from .models import Post, Comment
+from .models import Post, Comment,Category
 from .forms import EmailPostForm, CommentForm, SearchForm
 from taggit.models import Tag
 from django.http import HttpResponse
@@ -27,7 +29,7 @@ from django.conf import settings
 
 # update post
 from django.utils.decorators import method_decorator
-from django.views.generic import ListView,UpdateView,DeleteView
+from django.views.generic import ListView,UpdateView,DeleteView,CreateView
 from django.urls import reverse_lazy,reverse
 
 
@@ -77,7 +79,7 @@ def image_ranking(request):
 # @login_required
 def post_list(request, tag_slug=None):
     object_list = Post.published.all()
-    
+    category_details = Category.objects.all()
     # increment total image views by 1
     total_views = r.incr(f'Post:{Post.id}:views')
 
@@ -106,7 +108,8 @@ def post_list(request, tag_slug=None):
                  {'page': page,
                   'posts': posts,
                   'tag': tag,
-                  'total_views': total_views
+                  'total_views': total_views,
+                  'category_details':category_details,
                 })
 
 @login_required
@@ -119,6 +122,14 @@ def post_detail(request, year, month, day, post):
 
     # List of active comments for this post
     comments = post.comments.filter(active=True)
+    # likes
+    stuff = get_object_or_404(Post,title=post)
+    total_likes =stuff.total_likes()
+    liked=False
+    if stuff.likes.filter(id=request.user.id).exists():
+        liked =True
+
+
 
     new_comment = None
 
@@ -148,7 +159,9 @@ def post_detail(request, year, month, day, post):
                    'comments': comments,
                    'new_comment': new_comment,
                    'comment_form': comment_form,
-                   'similar_posts': similar_posts})
+                   'similar_posts': similar_posts,
+                   'total_likes':total_likes,
+                   'liked':liked})
 
 
 def post_share(request, post_id):
@@ -231,4 +244,50 @@ class DeletePostView(DeleteView):
 
     def get_success_url(self):
         return reverse('blog:post_list')
+
+
+class AddCategoryView(CreateView):
+    model = Category
+    template_name = 'account/add_category.html'
+    fields = '__all__'
+
+
+
+def CategoryView(request,cats):
+    category_post = Post.objects.filter(category=cats.replace('_',' '))
+    paginator = Paginator(category_post, 3) # 3 posts in each page
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer deliver the first page
+        posts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range deliver last page of results
+        posts = paginator.page(paginator.num_pages)
+    return render (request,'account/categories.html',{'page':page,'cats':cats.title().replace('_',' '),'category_post':category_post,'posts':posts})
+
+
+# def Categorydetails(request):
+#     category_details = Category.objects.all()
+#     return render(request,'base.html',{'category_details':category_details})
+
+
+def LikeView(request ,pk):
+    post =get_object_or_404(Post, id=request.POST.get('post_id'))
+    liked=False
+    if post.likes.filter(id=request.user.id).exists():
+        post.likes.remove(request.user)
+        liked=False
+    else:
+        post.likes.add(request.user)
+        liked=True
+    return HttpResponseRedirect(reverse('blog:post_list'))
+    
+@login_required
+def PoliticsView(request):
+    post_politics =Post.objects.filter(category='politics')
+    return render(request, 'account/politics.html',{'post_politics':post_politics})
+
+
 

@@ -5,7 +5,7 @@ from django_filters.views import FilterView
 from django.views.generic import TemplateView
 from django.conf.urls import url
 from .filters import UserFilter
-from .views import UpdatePostView,DeletePostView
+from .views import UpdatePostView,DeletePostView,AddCategoryView,LikeView
 
 app_name = 'blog'
 
@@ -26,4 +26,13 @@ urlpatterns = [
     path('post-upload/', views.post_upload, name='post-upload'),
     path('<int:pk>/update/',UpdatePostView.as_view(),name='update_post'),
     path('<int:pk>/delete/',DeletePostView.as_view(),name='delete_post'),
+    path('add_category/',AddCategoryView.as_view(),name='add-category'),
+    path('category/<str:cats>/',views.CategoryView,name='category'),
+    # path('category-details/',views.Categorydetails,name='category-details'),
+    path('like/<int:pk>/',views.LikeView,name='like_post'),
+    path('politics/',views.PoliticsView,name='politics'),
+    
+
+
+
 ]
