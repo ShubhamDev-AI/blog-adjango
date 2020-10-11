@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% comment %} side bar {% endcomment %}
+    {% include 'account/sidebar.html'%}
+{% comment %} end side bar {% endcomment %}
+<div id="content" class="p-4 p-md-5 pt-5">
+        <h1> Post {{ title }} upload successfully
+        </h1>
+        
+</div>
+{% endblock %}

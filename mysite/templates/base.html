@@ -1,0 +1,141 @@
+{% load static %}
+{% comment %} account {% endcomment %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+      <title>{% block title %}{% endblock %}</title>
+      <link href="{% static "css/base.css" %}" rel="stylesheet">
+      <link href="{% static "css/styles.css" %}" rel="stylesheet">
+
+      <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+		
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style >
+    .navbar {
+      background-color:#866ec7;
+    }
+
+    
+    </style>
+   
+<script>
+
+</script>
+
+</head>
+<body>
+<div class="bs-example">
+{% comment %} navigation menu {% endcomment %}
+    <nav class="navbar navbar-expand-md navbar-dark">
+        <a href="{% url 'blog:post_list'%}" class="navbar-brand">My Blogs</a>
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="navbar-nav">
+            <a href="{% url "blog:post_list" %}" class="nav-item nav-link">Post</a>
+            {% if request.user.is_authenticated %}
+                <a href="{% url "dashboard" %}" class="nav-item nav-link active">Dashboard</a>
+                
+                <a href="{% url "blog:post_search" %}" class="nav-item nav-link">Search</a>
+                               <a href="{% url "blog:post_feed" %}" class="nav-item nav-link">Feed</a>
+                <a href="{% url "blog:search" %}" class="nav-item nav-link">user details</a>
+                <a href="{% url "blog:user_list" %}" class="nav-item nav-link">Peopls</a>
+                <a href="{% url 'blog:user_activity' %}" class="nav-item nav-link">User Activity </a>
+                
+                
+              {% if user.id == 1 %}
+                <a href="{% url 'blog:add-category'%}" class="nav-item nav-link">Add Category</a>
+              {% endif %}
+                 <a href="{% url 'blog:post-upload'%}" class="nav-item nav-link">upload Post</a>
+
+            {% endif %}
+            </div>
+            <form class="form-inline ml-auto" method="get">
+                <input type="text" class="form-control mr-sm-2" placeholder="Search">
+                <input type="submit" class="btn btn-outline-light"value="Search">
+            </form>
+            
+        <div>  
+                <button class="navbar-toggler" type="button" data-toggle="collapse"    data-target="#navbar-list-4" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+              </button>
+              <div class="collapse navbar-collapse" id="navbar-list-4">
+                <ul class="navbar-nav">
+                {% if request.user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <img src="/media/{{MEDIA_URL}}/{{user.profile.photo}}" width="40" height="40" class="rounded-circle">
+                    </a>
+                   <div class="dropdown-menu dropdown-menu-right"      aria-labelledby="navbarDropdownMenuLink">
+                          <p class="dropdown-item"> {{ request.user.first_name }}  {{ request.user.last_name }}</p>
+                          <a class="dropdown-item" href="{% url "dashboard" %}">Dashboard</a>
+                          <a class="dropdown-item" href="{% url "edit" %}">Edit Profile</a>
+                          <a class="dropdown-item" href="{% url "logout" %}">Log Out</a>
+  
+                      </div>
+                  </li>
+                  {% else %}
+                  <div class="navbar-nav">
+                        <a href="{% url "login" %}" class="nav-item nav-link">Log-in</a>
+                  </div>
+                  {% endif %}
+                       
+                </ul>
+              </div>
+          </div>
+        </div>
+    </nav>
+    {% comment %} end nav {% endcomment %}
+</div>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="{{ message.tags }}">
+          {{ message|safe }}
+            <a href="#" class="close">x</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% comment %} side bar {% endcomment %}
+
+<div class="wrapper d-flex align-items-stretch">
+    {% block content %}
+    {% endblock %}
+  </div>
+{% comment %} footer {% endcomment %}
+  {% include 'account/footer.html'%}
+{% comment %} footer end {% endcomment %}
+</body>
+<script src="{% static "js/jquery.min.js"%}"></script>
+    <script src="{% static "js/popper.js"%}"></script>
+    <script src="{% static "js/bootstrap.min.js"%}"></script>
+    <script src="{% static "js/main.js"%}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@2.2.1/src/js.cookie.min.js"></script>
+  <script>
+    var csrftoken = Cookies.get('csrftoken');
+    function csrfSafeMethod(method) {
+      // these HTTP methods do not require CSRF protection
+      return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+      }
+    });
+
+    $(document).ready(function(){
+      {% block domready %}
+      {% endblock %}
+    });
+  </script>
+
+</html>

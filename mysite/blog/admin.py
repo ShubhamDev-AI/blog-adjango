@@ -1,8 +1,11 @@
 from django.contrib import admin
-from .models import Post, Comment,export_csv,Category
+from .models import Post, Comment,Category,Contact
 
 admin.site.register(Category)
 
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    list_display = ('user_from','user_to','created')
 
 
 
@@ -28,9 +31,5 @@ class CommentAdmin(admin.ModelAdmin):
 
 
 
-
-class MyModelAdmin(admin.ModelAdmin):
-    
-    actions = [export_csv]
 
 

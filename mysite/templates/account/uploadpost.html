@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Post{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+      {% comment %} side bar {% endcomment %}
+          {% include 'account/sidebar.html'%}
+      {% comment %} end side bar {% endcomment %}
+      <div id="content" class="p-4 p-md-5 pt-5">
+        <h2>Add a new post</h2>
+
+          <form method="post">
+            {{ post_form.media }}
+            {{ post_form.as_p }}
+            {% csrf_token %}
+            <p><input type="submit" value="Add Post"></p>
+          </form>
+
+        {% comment %} <form method="POST" id="post-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" class="form-control" id="title" placeholder="Title">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="body" cols="40" rows="10" required="" id="id_body"></textarea>   
+        </div>
+        <div class="form-group">
+          <label>Author</label>
+              <input type="text" value="{{ user.username }}" />
+        </div>
+        <div class="form-group">
+              <label class="my-1 mr-2" for="inlineFormCustomSelectPref">status</label>
+            <select class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref">
+              <option selected>Choose...</option>
+              <option value="1">Publish</option>
+              <option value="2">draft</option>
+              
+            </select>
+        </div>
+        <div class="form-group">
+          <label>Tag</label>
+          <input type="text" class="form-control" id="tag" placeholder="Tags">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form> {% endcomment %}
+      </div>
+      <script>
+
+            var name = "{{ user.id }}";
+            document.getElementById("elder").value = name;
+      </script>
+{% else %}
+  <h1> Please Login...</h1>
+{% endif %}
+{% endblock %}

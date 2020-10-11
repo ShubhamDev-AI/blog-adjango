@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% comment %} side bar {% endcomment %}
+    {% include 'account/sidebar.html'%}
+{% comment %} end side bar {% endcomment %}
+<div id="content" class="p-4 p-md-5 pt-5">
+  <h2>Delete post</h2>
+  </br>
+  <h2>{{post.title}}</h2> 
+  <form method="post">
+      
+      {% csrf_token %}
+      <p><input type="submit" value="Delete Post"></p>
+    </form>
+
+</div>
+{% endblock %}

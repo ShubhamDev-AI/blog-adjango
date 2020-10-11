@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 from pathlib import Path
 from django.urls import reverse_lazy
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -40,6 +41,7 @@ INTERNAL_IPS = [ip[:-1] + "1" for ip in ips]
 INSTALLED_APPS = [
     'account.apps.AccountConfig',
     'blog.apps.BlogConfig',
+    'actions.apps.ActionsConfig',
     'taggit',
     'social_django',
     'django_extensions',
@@ -139,7 +141,10 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+ABSOLUTE_URL_OVERRIDES = {
+ 'auth.user': lambda u: reverse_lazy('blog:user_detail',
+ args=[u.username])
+}
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -182,3 +187,4 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'BF3_xQ6GgdmJJYV7EiOASHl0' # Google Consumer 
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_DB = 0
+

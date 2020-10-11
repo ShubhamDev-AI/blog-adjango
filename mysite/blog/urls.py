@@ -31,6 +31,12 @@ urlpatterns = [
     # path('category-details/',views.Categorydetails,name='category-details'),
     path('like/<int:pk>/',views.LikeView,name='like_post'),
     path('politics/',views.PoliticsView,name='politics'),
+    path('users/', views.user_list, name='user_list'),
+    path('users/follow/', views.user_follow, name='user_follow'),
+    path('users/<username>/', views.user_detail, name='user_detail'),
+    path('user_activity/', views.user_activity, name='user_activity'),
+
+
     
 
 

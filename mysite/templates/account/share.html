@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load blog_tags %}
+
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+{% comment %} side bar {% endcomment %}
+    {% include 'account/sidebar.html'%}
+{% comment %} end side bar {% endcomment %}
+<div id="content" class="p-4 p-md-5 pt-5">
+
+{% if sent %}
+    <h1>E-mail successfully sent</h1>
+    <p>
+      "{{ post.title }}" was successfully sent to {{ form.cleaned_data.to }}.
+    </p>
+  {% else %}
+    <h1>Share "{{ post.title }}" by e-mail</h1>
+    <form method="post">
+      {{ form.as_p }}
+      {% csrf_token %}
+      <input type="submit" value="Send e-mail">
+    </form>
+  {% endif %}    
+   
+</div>
+  
+
+
+{% endblock %}

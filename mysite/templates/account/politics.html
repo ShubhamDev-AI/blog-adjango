@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load blog_tags %}
+
+
+{% block title %}Politics{% endblock %}
+
+{% block content %}
+{% comment %} side bar {% endcomment %}
+    {% include 'account/sidebar.html'%}
+{% comment %} end side bar {% endcomment %}
+<div id="content" class="p-4 p-md-5 pt-5">
+  <h2>Politics</h2>
+    {% if post_politics %}
+                      
+        {% for post in post_politics %}
+            <div class="jumbotron" >
+                <div class="fluid-container">
+                <div class="row">
+                    <div class="col-md-12 col-lg-12 col-xl-12">
+                        <h2>
+                            <a href="{{ post.get_absolute_url }}">
+                            {{ post.title }}  
+                            </a>
+                           <a href="{% url 'blog:category' post.category|slugify %}"> {{ post.category }}</a>
+                            {% comment %} edit post {% endcomment %}
+                    {% if user.is_authenticated%}
+                        {% if user.id == post.author.id %}
+                            <a href="{% url 'blog:update_post' post.pk %}">
+                            Edit Post 
+                            </a>
+                            <a href="{% url 'blog:delete_post' post.pk %}">
+                            Delete Post 
+                            </a>
+                        {%endif %}
+                    {%endif%}                        
+                        </h2>
+                        </div>
+                        <div>
+                            <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                        </div>
+                    </div>
+                        <hr/>
+                <div class="row">
+                    <div class="col-md-12 col-lg-12 col-xl-12">
+                        <p>
+                            Tags:
+                            {% for tag in post.tags.all %}
+                                <a href="{% url "blog:post_list_by_tag" tag.slug %}">
+                                    {{ tag.name }}
+                                </a>
+                                {% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
+                        <p>
+                            Published {{ post.publish }} by {{ post.author }}
+                        </p>
+                    
+                    <p class="lead"> 
+                        {{ post.body|markdown|truncatewords_html:30 }}
+                    </p>
+                    </div>
+                </div>
+                                    {% comment %} like {% endcomment %}
+                                    {% with total_likes=image.users_like.count %}
+                                        <div class="image-info">
+                                                <div>
+                                                    <span class="count">
+                                                    {{ total_likes }} like{{ total_likes|pluralize }}
+                                                    </span>
+                                                </div>
+                                            {{ image.description|linebreaks }}
+                                            </div>
+                                <div class="image-likes">
+                                    {% for user in image.users_like.all %}
+                                    <div>
+                                        <img src="{{ user.profile.photo.url }}">
+                                            <p>{{ user.first_name }}</p>
+                                    </div>
+                                    {% empty %}
+                                    Nobody likes this post yet.
+                                    {% endfor %}
+                                </div>
+                                {% endwith %}
+                                    {% comment %} end post like {% endcomment %}
+                
+                </div>
+            </div>
+            {% endfor %}
+
+            {% include "pagination.html" with page=posts %}
+{% else %}
+<h2> Sorry!... Politics Post Are Not Available...</h2>
+{% comment %} side bar {% endcomment %}
+{% endif %}
+
+
+  </div>
+{% endblock %}

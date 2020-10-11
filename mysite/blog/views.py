@@ -8,7 +8,7 @@ from django.views.generic import ListView
 from django.shortcuts import redirect
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.contrib.postgres.search import TrigramSimilarity
-from .models import Post, Comment,Category
+from .models import Post, Comment,Category,Contact
 from .forms import EmailPostForm, CommentForm, SearchForm
 from taggit.models import Tag
 from django.http import HttpResponse
@@ -31,6 +31,10 @@ from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView,UpdateView,DeleteView,CreateView
 from django.urls import reverse_lazy,reverse
+from common.decorators import ajax_required
+# action
+from actions.utils import create_action
+from actions.models import Action
 
 
 r = redis.Redis(host=settings.REDIS_HOST,
@@ -40,15 +44,18 @@ r = redis.Redis(host=settings.REDIS_HOST,
 @login_required
 @require_POST
 def image_like(request):
-    image_id = request.POST.get('id')
+    post_id = request.POST.get('id')
     action = request.POST.get('action')
-    if image_id and action:
+    print(post_id)
+    print(action)
+
+    if post_id and action:
         try:
-            image = Image.objects.get(id=image_id)
+            post = Post.objects.get(id=post_id)
             if action == 'like':
-                image.users_like.add(request.user)
+                post.user_like.add(request.user)
             else:
-                image.users_like.remove(request.user)
+                post.user_like.remove(request.user)
             return JsonResponse({'status':'ok'})
         except:
             pass
@@ -61,23 +68,10 @@ def search(request):
 
 
 from django.contrib.auth.models import User
-# ranking redis
-@login_required
-def image_ranking(request):
-    # get image ranking dictionary
-    image_ranking = r.zrange('image_ranking', 0, -1,desc=True)[:10]
-    image_ranking_ids = [int(id) for id in image_ranking]
-    # get most viewed images
-    most_viewed = list(Post.objects.filter(id__in=image_ranking_ids))
-    most_viewed.sort(key=lambda x: image_ranking_ids.index(x.id))
-    return render(request,'account/posts.html',{'section': 'images','most_viewed': most_viewed})
-
-
-
-
 
 # @login_required
 def post_list(request, tag_slug=None):
+    
     object_list = Post.published.all()
     category_details = Category.objects.all()
     # increment total image views by 1
@@ -85,8 +79,6 @@ def post_list(request, tag_slug=None):
 
     geek_object = Post.objects.update(total_views = total_views)
     # geek_object.save() 
-    # increment image ranking by 1
-    # r.zincrby('Post_ranking', 1, Post.id)
     tag = None
 
     if tag_slug:
@@ -122,15 +114,7 @@ def post_detail(request, year, month, day, post):
 
     # List of active comments for this post
     comments = post.comments.filter(active=True)
-    # likes
-    stuff = get_object_or_404(Post,title=post)
-    total_likes =stuff.total_likes()
-    liked=False
-    if stuff.likes.filter(id=request.user.id).exists():
-        liked =True
-
-
-
+    
     new_comment = None
 
     if request.method == 'POST':
@@ -160,8 +144,7 @@ def post_detail(request, year, month, day, post):
                    'new_comment': new_comment,
                    'comment_form': comment_form,
                    'similar_posts': similar_posts,
-                   'total_likes':total_likes,
-                   'liked':liked})
+                   })
 
 
 def post_share(request, post_id):
@@ -291,3 +274,59 @@ def PoliticsView(request):
 
 
 
+# follow and u follow
+@login_required
+def user_list(request):
+    users = User.objects.filter(is_active=True)
+    return render(request,
+                  'account/userlist.html',
+                  {'users': users})
+
+
+@login_required
+def user_detail(request, username):
+    user = get_object_or_404(User,
+                             username=username,
+                             is_active=True)
+    return render(request,
+                  'account/userdetails.html',
+                  {'user': user})
+
+@ajax_required
+@require_POST
+@login_required
+def user_follow(request):
+    user_id = request.POST.get('id')
+    action = request.POST.get('action')
+    if user_id and action:
+        try:
+            user = User.objects.get(id=user_id)
+            if action == 'follow':
+                Contact.objects.get_or_create(user_from=request.user,
+                                              user_to=user)
+                create_action(request.user, 'is following', user)
+            else:
+                Contact.objects.filter(user_from=request.user,
+                                       user_to=user).delete()
+            return JsonResponse({'status':'ok'})
+        except User.DoesNotExist:
+            return JsonResponse({'status':'error'})
+    return JsonResponse({'status':'error'})
+
+
+# user activity
+@login_required
+def user_activity(request):
+    # Display all actions by default
+    actions = Action.objects.exclude(user=request.user)
+    following_ids = request.user.following.values_list('id',
+                                                       flat=True)
+    if following_ids:
+        # If user is following others, retrieve only their actions
+        actions = actions.filter(user_id__in=following_ids)
+    actions = actions.select_related('user', 'user__profile')\
+                     .prefetch_related('target')[:10]
+
+    return render(request,
+                  'account/activities.html',
+                  {'actions': actions})

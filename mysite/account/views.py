@@ -6,6 +6,9 @@ from django.contrib import messages
 from .models import Profile
 from .forms import LoginForm, UserRegistrationForm, \
                    UserEditForm, ProfileEditForm
+# action
+from actions.utils import create_action
+from actions.models import Action
 
 
 def user_login(request):
@@ -52,6 +55,7 @@ def register(request):
             new_user.save()
             # Create the user profile
             Profile.objects.create(user=new_user)
+            create_action(new_user, 'has created an account')
             return render(request,
                           'account/register_done.html',
                           {'new_user': new_user})

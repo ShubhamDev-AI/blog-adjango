@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+{% comment %} side bar {% endcomment %}
+    {% include 'account/sidebar.html'%}
+{% comment %} end side bar {% endcomment %}
+<div id="content" class="p-4 p-md-5 pt-5">
+  <h2>Update post</h2>
+    <form method="post">
+      {{ form.media }}
+      {{ form.as_p }}
+      {% csrf_token %}
+      <p><input type="submit" value="Update Post"></p>
+    </form>
+</div>
+{% endblock %}

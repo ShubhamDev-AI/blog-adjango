@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
 from django.conf import settings
 from ckeditor.fields import RichTextField
+from django.contrib.auth import get_user_model
+
 
 
 class PublishedManager(models.Manager):
@@ -44,7 +46,9 @@ class Post(models.Model):
     status = models.CharField(max_length=10,
                               choices=STATUS_CHOICES,
                               default='draft')
-    likes = models.ManyToManyField(User,related_name='images_liked',blank=True)
+    user_like = models.ManyToManyField(User,related_name='post_liked',blank=True)
+    total_likes = models.PositiveIntegerField(db_index=True,
+                                              default=0)
     total_views =models.PositiveIntegerField(db_index=True,
                                               default=0)
     category = models.CharField(max_length=210,default='web technology')
@@ -87,29 +91,35 @@ class Comment(models.Model):
         return f'Comment by {self.name} on {self.post}'
 
 
-def export_csv(modeladmin, request, queryset):
-    import csv
-    from django.utils.encoding import smart_str
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename=mymodel.csv'
-    writer = csv.writer(response, csv.excel)
-    response.write(u'\ufeff'.encode('utf8')) # BOM (optional...Excel needs it to open UTF-8 file properly)
-    writer.writerow([
-        smart_str(u"ID"),
-        smart_str(u"Title"),
-        smart_str(u"Description"),
-    ])
-    for obj in queryset:
-        writer.writerow([
-            smart_str(obj.pk),
-            smart_str(obj.title),
-            smart_str(obj.description),
-        ])
-    return response
-export_csv.short_description = u"Export CSV"
-
 class History(models.Model):
     hist_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post_id = models.CharField(max_length=10000000, default="")
+
+
+# follow and unfollow system
+class Contact(models.Model):
+    user_from = models.ForeignKey('auth.User',
+                                  related_name='rel_from_set',
+                                  on_delete=models.CASCADE)
+    user_to = models.ForeignKey('auth.User',
+                                related_name='rel_to_set',
+                                on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True,
+                                   db_index=True)
+
+    class Meta:
+        ordering = ('-created',)
+
+    def __str__(self):
+        return f'{self.user_from} follows {self.user_to}'
+
+
+# Add following field to User dynamically
+user_model = get_user_model()
+user_model.add_to_class('following',
+                        models.ManyToManyField('self',
+                                                through=Contact,
+                                                related_name='followers',
+                                                symmetrical=False))
 
